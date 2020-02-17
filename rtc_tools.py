@@ -70,7 +70,8 @@ def calculateTotalPointsCompleted(parent, backlog):
     
     backlog.loc[id, 'Total Points Completed'] = total_points
     return backlog.loc[id, 'Total Points Completed']
-
+'''
+'''
 def calculateTotalPointsByStatus(parent, backlog, status):
 
     id = parent.name
@@ -82,14 +83,12 @@ def calculateTotalPointsByStatus(parent, backlog, status):
     print(x)
     return
 
-    '''
     if backlog['Status'].isin([status]):
         print(f'Found {status} in the list status types')
         return
     else:
         print(f'Did not find {status} in the list of status types')
         return
-    '''
 
     # Recursive condition: Work item has children
     if hasChildren(parent, backlog):
