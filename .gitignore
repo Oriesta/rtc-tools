@@ -1,2 +1,5 @@
 Backlog_Totals.csv
 Backlog_Totals.xlsx
+__pycache__
+.vscode
+settings.json

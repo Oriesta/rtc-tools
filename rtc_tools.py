@@ -1,15 +1,19 @@
 import numpy as np
 import pandas as pd
 
-backlog = pd.read_excel("C:\\Users\\ories\\Projects\\sample_data\\Sample Backlog.xlsx", index_col='ID')
-backlog['Parent ID'].fillna(0, inplace=True)
-backlog['Parent ID'] = backlog['Parent ID'].astype('int64')
-backlog['Story Points'].fillna(0, inplace=True)
-backlog['Story Points'] = backlog['Story Points'].astype('uint64')
-backlog['Total Story Points'] = np.zeros(backlog['Story Points'].size)
-backlog['Total Story Points'] = backlog['Total Story Points'].astype('uint64')
-backlog['Total Points Completed'] = np.zeros(backlog['Story Points'].size)
-backlog['Total Points Completed'] = backlog['Total Points Completed'].astype('uint64')
+def getBacklogFromFile(filename):
+    '''Opens a backlog file in and excel format'''
+
+    backlog = pd.read_excel("C:\\Users\\ories\\Projects\\sample_data\\Sample Backlog.xlsx", index_col='ID')
+    backlog['Parent ID'].fillna(0, inplace=True)
+    backlog['Parent ID'] = backlog['Parent ID'].astype('int64')
+    backlog['Story Points'].fillna(0, inplace=True)
+    backlog['Story Points'] = backlog['Story Points'].astype('uint64')
+    backlog['Total Story Points'] = np.zeros(backlog['Story Points'].size)
+    backlog['Total Story Points'] = backlog['Total Story Points'].astype('uint64')
+    backlog['Total Points Completed'] = np.zeros(backlog['Story Points'].size)
+    backlog['Total Points Completed'] = backlog['Total Points Completed'].astype('uint64')
+    return backlog
 
 # Check if a work item has children
 def hasChildren(work_item, backlog):
@@ -48,6 +52,22 @@ def calculateTotalPoints(work_item, backlog):
     backlog.loc[id, 'Total Story Points'] = total_points
     return backlog.loc[id,'Total Story Points']
 
+def populateTotalPoints(backlog, work_item=None):
+    '''Gets the total points for a work item including children or all points if work_item is none'''
+
+    total_points = 0
+    if work_item is not None:
+        total_points = calculateTotalPoints(work_item, backlog)
+    else:
+        # Get all work items that don't have parents
+        work_items_with_no_parents = backlog.loc[backlog['Parent ID'] == 0]
+
+        # Get and sum up points for each top level story
+        for id in work_items_with_no_parents.index:
+            backlog.loc[id, 'Total Story Points'] = calculateTotalPoints(backlog.loc[id], backlog)
+            total_points += backlog.loc[id, 'Total Story Points']
+
+    return total_points
 '''
 # Calculate total points completed (including children) for each work item
 def calculateTotalPointsCompleted(parent, backlog):
@@ -101,15 +121,25 @@ def calculateTotalPointsByStatus(parent, backlog, status):
     # Base condition: Work item has the same status as that passed in
 '''
 
-# Get all work items that don't have parents
-work_items_with_no_parents = backlog.loc[backlog['Parent ID'] == 0]
 
-# Calculate the total story points for each parent
-for id in work_items_with_no_parents.index:
-    backlog.loc[id, 'Total Story Points'] = calculateTotalPoints(backlog.loc[id], backlog)
+
+
     # backlog.loc[parent_id, 'Total Points Completed'] = calculateTotalPointsCompleted(backlog.loc[parent_id], backlog)
     # calculateTotalPointsByStatus(backlog.loc[parent_id], backlog, 'In Progress')
 
 
-# Verify the total points are filled out for all backlog items
-backlog.to_csv('Backlog_Totals.csv')
+if __name__ == '__main__':
+
+    # Open a backlog from a file
+    filename = "C:\\Users\\ories\\Projects\\sample_data\\Sample Backlog.xlsx"
+    backlog = getBacklogFromFile(filename)
+    
+    # Get all work items that don't have parents
+    work_items_with_no_parents = backlog.loc[backlog['Parent ID'] == 0]
+
+    # Calculate the total story points for each parent
+    for id in work_items_with_no_parents.index:
+        backlog.loc[id, 'Total Story Points'] = calculateTotalPoints(backlog.loc[id], backlog)
+
+    # Verify the total points are filled out for all backlog items
+    backlog.to_csv('Backlog_Totals.csv')
